@@ -174,6 +174,6 @@ if show_3d:
             color_by=str(color_by),
         )
         st.plotly_chart(fig3d, use_container_width=True)
-        st.caption("Note: 3D plot is interactive in the browser. (No download for Plotly plots.)")
+        st.caption("Note: 3D plot is interactive in the browser. (To download Plotly plots click camera emoji.)")
     except Exception as exc:
         st.error(f"Could not generate 3D plot: {exc}")

@@ -19,4 +19,4 @@ Columns should follow the pattern:
 - `Time - <signal name>`
 - `<anything> - <signal name>`
 
-Example:
+CI smoke test: verifying GitHub Actions.

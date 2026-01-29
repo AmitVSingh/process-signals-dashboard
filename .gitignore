@@ -1,27 +1,48 @@
+# ================================
 # Python
+# ================================
 __pycache__/
 *.py[cod]
 
+# ================================
 # Virtual environments
+# ================================
 .venv/
 venv/
 ENV/
 
-# OS
-.DS_Store
-Thumbs.db
-
-# Streamlit
-.streamlit/
-
-# IDE
-.vscode/
-
-# Logs
-*.log
-
-# debug runner
+# ================================
+# Local debug & scratch files
+# ================================
 debug_runner.py
+local_debug/
 sample_data.xlsx
 debug_output.png
 
+# ================================
+# Streamlit
+# ================================
+.streamlit/
+
+# ================================
+# IDEs / Editors
+# ================================
+.vscode/
+
+# ================================
+# OS files
+# ================================
+.DS_Store
+Thumbs.db
+
+# ================================
+# Logs
+# ================================
+*.log
+
+# ================================
+# Test artifacts (future-proof)
+# ================================
+.pytest_cache/
+.coverage
+htmlcov/
