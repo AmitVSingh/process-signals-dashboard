@@ -19,3 +19,6 @@ Thumbs.db
 
 # Logs
 *.log
+
+# debug runner
+debug_runner.py
