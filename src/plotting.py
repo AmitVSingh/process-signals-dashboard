@@ -12,10 +12,17 @@ from src.processing import fft_magnitude
 
 RowTuple = Tuple[str, np.ndarray, np.ndarray, np.ndarray]  # (label, t, y, y_ma)
 
+
 # =========================================================
-# Matplotlib plots
+# Matplotlib plots (downloadable PNG)
 # =========================================================
 def make_3x3_figure(rows: List[RowTuple], bins: int = 30) -> plt.Figure:
+    """
+    3x3:
+      Col 1: time series (raw + MA)
+      Col 2: histogram (raw)
+      Col 3: FFT magnitude (raw)
+    """
     if len(rows) != 3:
         raise ValueError("Exactly 3 rows required")
 
@@ -23,25 +30,40 @@ def make_3x3_figure(rows: List[RowTuple], bins: int = 30) -> plt.Figure:
 
     for i, (label, t, y, y_ma) in enumerate(rows):
         # Time series
-        axes[i, 0].plot(t, y, label="raw")
-        axes[i, 0].plot(t, y_ma, label="MA")
-        axes[i, 0].set_title(f"{label} vs Time")
-        axes[i, 0].legend()
+        ax = axes[i, 0]
+        ax.plot(t, y, label="raw")
+        ax.plot(t, y_ma, label="MA")
+        ax.set_title(f"{label} vs Time")
+        ax.set_xlabel("Time")
+        ax.set_ylabel(label)
+        ax.legend(loc="best")
 
         # Histogram
-        axes[i, 1].hist(y, bins=bins)
-        axes[i, 1].set_title(f"{label} Histogram")
+        ax = axes[i, 1]
+        ax.hist(y, bins=bins)
+        ax.set_title(f"{label} Histogram")
+        ax.set_xlabel(label)
+        ax.set_ylabel("Count")
 
         # FFT
+        ax = axes[i, 2]
         f, m = fft_magnitude(t, y)
         if f.size:
-            axes[i, 2].plot(f, m)
-        axes[i, 2].set_title(f"{label} FFT")
+            ax.plot(f, m)
+        ax.set_title(f"{label} FFT Magnitude")
+        ax.set_xlabel("Frequency (Hz)")
+        ax.set_ylabel("Magnitude")
 
     return fig
 
 
 def make_frequency_polygon_1x3(rows: List[RowTuple], bins: int = 30) -> plt.Figure:
+    """
+    1x3 frequency polygons (histogram as a line), one subplot per selected signal.
+    """
+    if len(rows) != 3:
+        raise ValueError("Exactly 3 rows required")
+
     fig, axes = plt.subplots(1, 3, figsize=(14, 4), constrained_layout=True)
 
     for i, (label, _t, y, _y_ma) in enumerate(rows):
@@ -49,11 +71,16 @@ def make_frequency_polygon_1x3(rows: List[RowTuple], bins: int = 30) -> plt.Figu
         centers = 0.5 * (edges[:-1] + edges[1:])
         axes[i].plot(centers, counts, marker="o")
         axes[i].set_title(f"{label} Frequency Polygon")
+        axes[i].set_xlabel(label)
+        axes[i].set_ylabel("Count")
 
     return fig
 
 
 def fig_to_png_bytes(fig: plt.Figure, dpi: int = 160) -> bytes:
+    """
+    Convert Matplotlib figure to PNG bytes (Streamlit display + download).
+    """
     buf = BytesIO()
     fig.savefig(buf, format="png", dpi=dpi, bbox_inches="tight")
     plt.close(fig)
@@ -61,7 +88,7 @@ def fig_to_png_bytes(fig: plt.Figure, dpi: int = 160) -> bytes:
 
 
 # =========================================================
-# Plotly interactive 3D
+# Plotly interactive 3D (NO download/export)
 # =========================================================
 def make_plotly_3d_signals(
     rows: List[RowTuple],
@@ -70,6 +97,15 @@ def make_plotly_3d_signals(
     marker_size: int = 3,
     color_by: str = "Sample index",
 ) -> go.Figure:
+    """
+    Interactive Plotly 3D scatter:
+      X = Row1 values, Y = Row2 values, Z = Row3 values
+    Color can be chosen by:
+      - Sample index
+      - Row 1/2/3 time
+      - Row 1/2/3 value (raw or MA depending on use_ma)
+    Alignment: by index (trim to min length, optional downsample).
+    """
     if len(rows) != 3:
         raise ValueError("Exactly 3 rows required")
 
@@ -88,11 +124,12 @@ def make_plotly_3d_signals(
     x, y, z = x[:n], y[:n], z[:n]
     tx, ty, tz = tx[:n], ty[:n], tz[:n]
 
-    if n > max_points:
-        idx = np.linspace(0, n - 1, max_points).astype(int)
+    # Downsample for performance
+    if max_points and n > max_points:
+        idx = np.linspace(0, n - 1, int(max_points)).astype(int)
         x, y, z = x[idx], y[idx], z[idx]
         tx, ty, tz = tx[idx], ty[idx], tz[idx]
-        n = max_points
+        n = int(max_points)
 
     # Choose color driver
     if color_by == "Row 1 time":
@@ -138,7 +175,3 @@ def make_plotly_3d_signals(
     )
 
     return fig
-
-
-def plotly_fig_to_png_bytes(fig: go.Figure, scale: float = 2.0) -> bytes:
-    return fig.to_image(format="png", scale=scale, engine="kaleido")
