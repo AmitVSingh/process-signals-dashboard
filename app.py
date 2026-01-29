@@ -25,6 +25,25 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s | %(message)s")
 st.set_page_config(page_title="Process Signals Dashboard", layout="wide")
 st.title("Process Signals Dashboard")
 
+
+# =========================================================
+# Cached helpers (define once, near top)
+# =========================================================
+@st.cache_data(show_spinner="Reading Excel file...")
+def load_excel_cached(uploaded_file):
+    return load_excel(uploaded_file)
+
+
+@st.cache_data(show_spinner=False)
+def discover_signals_cached(df):
+    return discover_signals(df)
+
+
+@st.cache_data(show_spinner=False)
+def extract_signal_cached(df, sig):
+    return extract_signal(df, sig)
+
+
 # =========================================================
 # Sidebar Controls
 # =========================================================
@@ -64,14 +83,16 @@ if uploaded is None:
     st.info("Upload an Excel file to begin.")
     st.stop()
 
-# Load + detect signals
+# =========================================================
+# Load + detect signals (cached + safe)
+# =========================================================
 try:
-    df = load_excel(uploaded)
+    df = load_excel_cached(uploaded)
 except Exception as exc:
     st.error(f"Failed to read Excel file: {exc}")
     st.stop()
 
-signals = discover_signals(df)
+signals = discover_signals_cached(df)
 if not signals:
     st.error(
         "No signals found. Expected columns like:\n"
@@ -101,7 +122,12 @@ selected = [s1, s2, s3]
 rows = []
 for name in selected:
     sig = by_name[name]
-    t_s, y_s = extract_signal(df, sig)
+
+    try:
+        t_s, y_s = extract_signal_cached(df, sig)
+    except Exception as exc:
+        st.error(f"Failed to extract signal '{name}': {exc}")
+        st.stop()
 
     if len(t_s) < 4:
         st.error(f"Signal '{name}' has too few valid samples.")
