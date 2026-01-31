@@ -24,7 +24,7 @@ def make_3x3_figure(series: Sequence[SeriesData], bins: int = 30) -> plt.Figure:
     if len(series) != 3:
         raise ValueError("Exactly 3 rows required")
 
-    fig, axes = plt.subplots(3, 3, figsize=(14, 9), constrained_layout=True)
+    fig, axes = plt.subplots(3, 3, figsize=(14, 9), constrained_layout=True, squeeze=False)
 
     for i, s in enumerate(series):
         # Time series
@@ -62,15 +62,16 @@ def make_frequency_polygon_1x3(series: Sequence[SeriesData], bins: int = 30) -> 
     if len(series) != 3:
         raise ValueError("Exactly 3 rows required")
 
-    fig, axes = plt.subplots(1, 3, figsize=(14, 4), constrained_layout=True)
+    fig, axes = plt.subplots(1, 3, figsize=(14, 4), constrained_layout=True, squeeze=False)
 
     for i, s in enumerate(series):
+        ax = axes[0, i]  # <-- key fix
         counts, edges = np.histogram(s.y, bins=bins)
         centers = 0.5 * (edges[:-1] + edges[1:])
-        axes[i].plot(centers, counts, marker="o")
-        axes[i].set_title(f"{s.name} Frequency Polygon")
-        axes[i].set_xlabel(s.name)
-        axes[i].set_ylabel("Count")
+        ax.plot(centers, counts, marker="o")
+        ax.set_title(f"{s.name} Frequency Polygon")
+        ax.set_xlabel(s.name)
+        ax.set_ylabel("Count")
 
     return fig
 
