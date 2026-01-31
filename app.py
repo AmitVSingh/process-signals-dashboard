@@ -11,7 +11,11 @@ PROJECT_ROOT = Path(__file__).resolve().parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from src.io_excel import load_excel, discover_signals, extract_signal
+from src.cache import (
+    load_excel_cached,
+    discover_signals_cached,
+    extract_signal_cached,
+)
 from src.models import SeriesData
 from src.processing import moving_average
 from src.plotting import (
