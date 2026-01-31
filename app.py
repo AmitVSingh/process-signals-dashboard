@@ -11,7 +11,11 @@ PROJECT_ROOT = Path(__file__).resolve().parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from src.io_excel import load_excel, discover_signals, extract_signal
+from src.cache import (
+    load_excel_cached,
+    discover_signals_cached,
+    extract_signal_cached,
+)
 from src.models import SeriesData
 from src.processing import moving_average
 from src.plotting import (
@@ -25,25 +29,6 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s | %(message)s")
 
 st.set_page_config(page_title="Process Signals Dashboard", layout="wide")
 st.title("Process Signals Dashboard")
-
-
-# =========================================================
-# Cached helpers (define once, near top)
-# =========================================================
-@st.cache_data(show_spinner="Reading Excel file...")
-def load_excel_cached(uploaded_file):
-    return load_excel(uploaded_file)
-
-
-@st.cache_data(show_spinner=False)
-def discover_signals_cached(df):
-    return discover_signals(df)
-
-
-@st.cache_data(show_spinner=False)
-def extract_signal_cached(df, sig):
-    return extract_signal(df, sig)
-
 
 # =========================================================
 # Sidebar Controls
@@ -128,7 +113,7 @@ for name in selected:
 
     t = t_s.to_numpy(dtype=float)
     y = y_s.to_numpy(dtype=float)
-    y_ma = moving_average(y, int(ma_window))
+    y_ma = moving_average(y, int(ma_window), mode="trailing")
 
     series_list.append(SeriesData(name=name, t=t, y=y, y_ma=y_ma))
 

@@ -3,28 +3,57 @@ from __future__ import annotations
 import numpy as np
 
 
-def moving_average(x: np.ndarray, window: int) -> np.ndarray:
+def moving_average(x: np.ndarray, window: int, mode: str = "trailing") -> np.ndarray:
     """
-    Moving average with edge padding (prevents the MA curve from dropping at the
-    beginning/end due to convolution boundary effects).
+    Moving average with length preserved.
 
-    - Returns same-length output as x
-    - If window <= 1, returns x unchanged
+    Parameters
+    ----------
+    x : np.ndarray
+        Input 1D signal.
+    window : int
+        Window size (>= 1).
+    mode : str
+        "trailing" (causal) or "centered" (non-causal).
+
+    Returns
+    -------
+    np.ndarray
+        Smoothed signal, same length as x.
     """
-    if window is None or int(window) <= 1:
-        return x
+    x = np.asarray(x, dtype=float)
+    n = x.size
+    if window <= 1 or n == 0:
+        return x.copy()
+    if window < 1:
+        raise ValueError("window must be >= 1")
+    if window > n:
+        # Degenerate case: window larger than signal length
+        # trailing: use mean up to each point; centered: use global mean
+        if mode == "trailing":
+            c = np.cumsum(x)
+            return c / np.arange(1, n + 1)
+        return np.full_like(x, np.mean(x))
 
     w = int(window)
-    kernel = np.ones(w, dtype=float) / float(w)
 
-    # Pad using edge values to avoid boundary drop
-    pad_left = w // 2
-    pad_right = w - 1 - pad_left
-    x_pad = np.pad(x, (pad_left, pad_right), mode="edge")
+    if mode == "trailing":
+        # Pad the beginning with the first sample so the output length matches input
+        x_pad = np.pad(x, (w - 1, 0), mode="edge")
+        kernel = np.ones(w, dtype=float) / w
+        y = np.convolve(x_pad, kernel, mode="valid")
+        return y
 
-    # 'valid' on padded signal returns same length as original
-    y = np.convolve(x_pad, kernel, mode="valid")
-    return y
+    if mode == "centered":
+        # Symmetric padding; window centered around each point
+        left = (w - 1) // 2
+        right = w - 1 - left
+        x_pad = np.pad(x, (left, right), mode="edge")
+        kernel = np.ones(w, dtype=float) / w
+        y = np.convolve(x_pad, kernel, mode="valid")
+        return y
+
+    raise ValueError("mode must be 'trailing' or 'centered'")
 
 
 def fft_magnitude(time: np.ndarray, signal: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
