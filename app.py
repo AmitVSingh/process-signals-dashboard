@@ -12,6 +12,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.io_excel import load_excel, discover_signals, extract_signal
+from src.models import SeriesData
 from src.processing import moving_average
 from src.plotting import (
     make_3x3_figure,
@@ -118,32 +119,25 @@ with st.sidebar:
 
 selected = [s1, s2, s3]
 
-# Build rows: (label, t, y, y_ma)
-rows = []
+# Build series: (label, t, y, y_ma)
+series_list: list[SeriesData] = []
+
 for name in selected:
     sig = by_name[name]
-
-    try:
-        t_s, y_s = extract_signal_cached(df, sig)
-    except Exception as exc:
-        st.error(f"Failed to extract signal '{name}': {exc}")
-        st.stop()
-
-    if len(t_s) < 4:
-        st.error(f"Signal '{name}' has too few valid samples.")
-        st.stop()
+    t_s, y_s = extract_signal_cached(df, sig)
 
     t = t_s.to_numpy(dtype=float)
     y = y_s.to_numpy(dtype=float)
     y_ma = moving_average(y, int(ma_window))
 
-    rows.append((name, t, y, y_ma))
+    series_list.append(SeriesData(name=name, t=t, y=y, y_ma=y_ma))
+
 
 # =========================================================
 # 3x3 plot (Matplotlib) + download
 # =========================================================
 st.subheader("3×3 Analysis Plot (Time + Histogram + FFT)")
-fig_3x3 = make_3x3_figure(rows, bins=int(hist_bins))
+fig_3x3 = make_3x3_figure(series_list, bins=int(hist_bins))
 png_3x3 = fig_to_png_bytes(fig_3x3)
 
 st.image(png_3x3, use_container_width=True)
@@ -154,7 +148,7 @@ st.download_button("Download 3×3 plot PNG", png_3x3, "plot_3x3.png", "image/png
 # =========================================================
 if show_freq_poly:
     st.subheader("1×3 Frequency Polygon")
-    fig_poly = make_frequency_polygon_1x3(rows, bins=int(hist_bins))
+    fig_poly = make_frequency_polygon_1x3(series_list, bins=int(hist_bins))
     png_poly = fig_to_png_bytes(fig_poly)
 
     st.image(png_poly, use_container_width=True)
@@ -167,7 +161,7 @@ if show_3d:
     st.subheader("Interactive 3D Plot (Plotly) — X=Row1, Y=Row2, Z=Row3")
     try:
         fig3d = make_plotly_3d_signals(
-            rows,
+            series_list,
             use_ma=bool(use_ma_3d),
             max_points=int(max_points_3d),
             marker_size=int(marker_size),
