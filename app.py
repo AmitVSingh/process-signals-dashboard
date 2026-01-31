@@ -11,11 +11,8 @@ PROJECT_ROOT = Path(__file__).resolve().parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from src.cache import (
-    load_excel_cached,
-    discover_signals_cached,
-    extract_signal_cached,
-)
+from src.cache import load_excel_cached
+from src.io_excel import discover_signals, extract_signal
 from src.models import SeriesData
 from src.processing import moving_average
 from src.plotting import (
@@ -78,7 +75,7 @@ except Exception as exc:
     st.error(f"Failed to read Excel file: {exc}")
     st.stop()
 
-signals = discover_signals_cached(df)
+signals = discover_signals(df)
 if not signals:
     st.error(
         "No signals found. Expected columns like:\n"
@@ -109,7 +106,7 @@ series_list: list[SeriesData] = []
 
 for name in selected:
     sig = by_name[name]
-    t_s, y_s = extract_signal_cached(df, sig)
+    t_s, y_s = extract_signal(df, sig)
 
     t = t_s.to_numpy(dtype=float)
     y = y_s.to_numpy(dtype=float)
