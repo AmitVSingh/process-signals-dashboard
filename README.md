@@ -1,6 +1,7 @@
 # Process Signals Dashboard
-
+Link to dashboard: https://process-signals-dashboard-gbpedqd3uma7yxgjonfsfz.streamlit.app/
 Interactive Streamlit dashboard for analyzing machine process signals from Excel files.
+
 
 ## Features
 - Upload Excel files with machine-generated signals
